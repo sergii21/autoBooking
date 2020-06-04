@@ -1,12 +1,18 @@
-import React from 'react';
-import './App.css';
-import SignInSide from './auth/SignIn';
+import React, { Component } from "react";
+import "./App.css";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import Booking from "./booking/containers/Booking";
 
-function App() {
-  return (
-    
-    <SignInSide></SignInSide>
-  );
+export default class App extends Component {
+  render() {
+    return (
+      <Router>
+        <Switch>
+          <Route path="/:service_slug?/:brand_slug?/:style_slug?">
+            <Booking></Booking>
+          </Route>
+        </Switch>
+      </Router>
+    );
+  } 
 }
-
-export default App;
