@@ -11,20 +11,59 @@ class Booking extends Component {
       services: [],
       brands: [],
       styles: [],
-      service_slug: "",
-      brand_slug: "",
-      style_slug: "",
+      selectedService: null,
+      selectedBrand: null,
+      selectedStyle: null,
+      isServicesLoading: false,
+      isBrandsLoading: false,
+      isStylesLoading: false,
     };
   }
 
   componentDidMount() {
     const { service_slug, brand_slug, style_slug } = this.props.match.params;
-    this.setState({ service_slug, brand_slug, style_slug });
-    const servicesURL = "https://beta.autobooking.com/api/test/v1/search/terms";
-    const brandsURL =
-      "https://beta.autobooking.com/api/test/v1/search/brands_terms";
-    const stylesURL = "https://beta.autobooking.com/api/test/v1/search/styles";
+    this.parseLinks(service_slug, brand_slug, style_slug);
+  }
 
+  parseLinks(service_slug, brand_slug, style_slug) {
+    if (service_slug && brand_slug && style_slug) {
+      axios
+        .get(
+          `https://beta.autobooking.com/api/test/v1/search/parse_link?service_slug=${service_slug}&brand_slug=${brand_slug}&style_slug=${style_slug}`
+        )
+        .then((res) => {
+          const { brand, service, style } = res.data;
+          this.setState({
+            styles: [style],
+            brands: [brand],
+            services: [service],
+            selectedStyle: style,
+            selectedBrand: brand,
+            selectedService: service,
+          });
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
+  }
+
+  handleServiceChange = (selected) => {
+    this.setState(
+      {
+        selectedService: selected,
+        services: selected ? [selected] : [],
+      },
+      () => {
+        this.handleSelectChange();
+      }
+    );
+  };
+
+  handleServiceOpen = () => {
+    const servicesURL = "https://beta.autobooking.com/api/test/v1/search/terms";
+
+    this.setState({ isServicesLoading: true });
     axios
       .get(servicesURL)
       .then((res) => {
@@ -33,8 +72,27 @@ class Booking extends Component {
       })
       .catch((error) => {
         console.log(error);
-      });
+      })
+      .finally(() => this.setState({ isServicesLoading: false }));
+  };
 
+  handleBrandChange = (selected) => {
+    this.setState(
+      {
+        selectedBrand: selected,
+        brands: selected ? [selected] : [],
+      },
+      () => {
+        this.handleSelectChange();
+      }
+    );
+  };
+
+  handleBrandOpen = () => {
+    const brandsURL =
+      "https://beta.autobooking.com/api/test/v1/search/brands_terms";
+
+    this.setState({ isBrandsLoading: true });
     axios
       .get(brandsURL)
       .then((res) => {
@@ -43,8 +101,26 @@ class Booking extends Component {
       })
       .catch((error) => {
         console.log(error);
-      });
+      })
+      .finally(() => this.setState({ isBrandsLoading: false }));
+  };
 
+  handleStyleChange = (selected) => {
+    this.setState(
+      {
+        selectedStyle: selected,
+        styles: selected ? [selected] : [],
+      },
+      () => {
+        this.handleSelectChange();
+      }
+    );
+  };
+
+  handleStyleOpen = () => {
+    const stylesURL = "https://beta.autobooking.com/api/test/v1/search/styles";
+
+    this.setState({ isStylesLoading: true });
     axios
       .get(stylesURL)
       .then((res) => {
@@ -53,34 +129,17 @@ class Booking extends Component {
       })
       .catch((error) => {
         console.log(error);
-      });
-  }
-
-  handleServiceChange = (service_slug) => {
-    this.setState({ service_slug }, () => {
-      this.handleSelectChange();
-    });
-  };
-
-  handleBrandChange = (brandSlug) => {
-    this.setState({ brand_slug: brandSlug }, () => {
-      this.handleSelectChange();
-    });
-  };
-
-  handleStyleChange = (style_slug) => {
-    this.setState({ style_slug }, () => {
-      this.handleSelectChange();
-    });
+      })
+      .finally(() => this.setState({ isStylesLoading: false }));
   };
 
   handleSelectChange() {
-    const { service_slug, brand_slug, style_slug } = this.state;
+    const { selectedBrand, selectedService, selectedStyle } = this.state;
     this.props.history.push({
       pathname: generatePath(this.props.match.path, {
-        service_slug,
-        brand_slug,
-        style_slug,
+        brand_slug: selectedBrand ? selectedBrand.slug : null,
+        service_slug: selectedService ? selectedService.slug : null,
+        style_slug: selectedStyle ? selectedStyle.slug : null,
       }),
     });
   }
@@ -91,20 +150,26 @@ class Booking extends Component {
         <SimpleSelect
           name="Service"
           items={this.state.services}
-          value={this.state.service_slug}
+          value={this.state.selectedService}
+          isLoading={this.state.isServicesLoading}
           handleChange={this.handleServiceChange}
+          handleOpen={this.handleServiceOpen}
         ></SimpleSelect>
         <SimpleSelect
           name="Brand"
           items={this.state.brands}
-          value={this.state.brand_slug}
+          value={this.state.selectedBrand}
+          isLoading={this.state.isBrandsLoading}
           handleChange={this.handleBrandChange}
+          handleOpen={this.handleBrandOpen}
         ></SimpleSelect>
         <SimpleSelect
           name="Style"
           items={this.state.styles}
-          value={this.state.style_slug}
+          value={this.state.selectedStyle}
+          isLoading={this.state.isStylesLoading}
           handleChange={this.handleStyleChange}
+          handleOpen={this.handleStyleOpen}
         ></SimpleSelect>
       </div>
     );
